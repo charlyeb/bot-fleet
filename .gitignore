@@ -1,0 +1,33 @@
+# --- SECRETS: never commit these ---
+kraken_keys.json
+bot_wallet.json
+*_keys.json
+*_wallet.json
+*.pem
+*.key
+
+# --- Live state & trade history (personal data) ---
+bot_state.json
+kraken_state.json
+multi_state.json
+dashboard_history.json
+*_state.json
+trades_log.csv
+kraken_trades.csv
+export_transfer_*.csv
+results.csv
+*_results.csv
+
+# --- Downloaded market data ---
+*_1m.csv
+*_1h.csv
+*_1d.csv
+pool_meta.json
+*_pool_meta.json
+
+# --- macOS noise ---
+.DS_Store
+
+# --- Python ---
+__pycache__/
+*.pyc
