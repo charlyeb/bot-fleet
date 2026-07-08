@@ -6,6 +6,7 @@ Two ladder-strategy crypto trading bots — raw code, bring your own coins.
 |------|--------------|
 | `kraken_bot.py` | Kraken exchange multi-timeframe (1m/1h/1d) ladder bot. Adopts any coin you deposit, buys dips / sells pumps around an anchor price, keeps a USD reserve. Paper-trading mode by default. |
 | `multi_bot.py` | Solana on-chain multi-coin ladder bot (Jupiter swaps). Scans the wallet, spins up an independent ladder bot per token, splits usable SOL fairly across them. Dry-run mode by default. |
+| `dashboard.py` | Read-only web dashboard at `http://127.0.0.1:8899` that watches both bots. Never writes to bot files, never reads key files, never calls private APIs. Set `SOL_WALLET` to your bot wallet's public address and add your coins to `MINT_NAMES`. |
 
 ## Quick start
 
