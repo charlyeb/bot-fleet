@@ -440,9 +440,28 @@ h2{font-size:15px;font-weight:650;margin-bottom:2px}
 .tile .value{font-size:22px;font-weight:650}
 .tile .delta{font-size:12px;margin-top:2px;color:var(--ink2)}
 .up{color:var(--goodtext)} .down{color:var(--bad)}
-.cols{grid-template-columns:repeat(auto-fit,minmax(430px,1fr));align-items:start}
+.board{display:grid;gap:12px;
+  grid-template-columns:repeat(auto-fit,minmax(430px,1fr));align-items:start}
 .card{background:var(--surface);border:1px solid var(--border);
   border-radius:10px;padding:14px 16px}
+.wide{grid-column:1/-1}
+.card.dragging{opacity:.45}
+.grip{cursor:grab;color:var(--muted);font-size:14px;letter-spacing:-1px;
+  user-select:none;-webkit-user-select:none;padding:0 6px 0 0}
+.grip:active{cursor:grabbing}
+.k-card{--surface:#f0f6fe;--grid:#d9e3f0;--accent:#2a78d6;
+  border-color:rgba(42,120,214,.28)}
+.p-card{--surface:#f5f2fc;--grid:#e2dcf0;--accent:#4a3aa7;
+  border-color:rgba(74,58,167,.25)}
+@media (prefers-color-scheme: dark){
+  .k-card{--surface:#141f2d;--grid:#243447;--accent:#3987e5;
+    border-color:rgba(57,135,229,.35)}
+  .p-card{--surface:#1e1930;--grid:#322a4a;--accent:#9085e9;
+    border-color:rgba(144,133,233,.30)}
+}
+.k-card h2::before,.p-card h2::before{content:"";display:inline-block;
+  width:8px;height:8px;border-radius:50%;background:var(--accent);
+  margin-right:7px;vertical-align:1px}
 .card>.head{display:flex;justify-content:space-between;align-items:baseline;
   gap:8px;margin-bottom:10px;flex-wrap:wrap}
 table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
@@ -467,7 +486,7 @@ tr:last-child td{border-bottom:none}
   background:var(--muted)}
 .small{font-size:12px;color:var(--ink2)}
 .mono{font-family:ui-monospace,Menlo,monospace;font-size:11px}
-#spark{width:100%;height:64px;display:block}
+#spark{width:100%;height:170px;display:block}
 .footer{margin-top:18px;color:var(--muted);font-size:11px;line-height:1.6}
 .err{background:var(--surface);border:1px solid var(--bad);border-radius:8px;
   color:var(--bad);padding:8px 12px;margin-bottom:12px;font-size:12px;display:none}
@@ -483,24 +502,39 @@ section{margin-bottom:16px}
 
 <div class="grid kpis" id="kpis"></div>
 
-<section class="card" id="trend" style="display:none">
-  <div class="head"><h2>Fleet value</h2>
-    <span class="sub">total portfolio, sampled each refresh</span></div>
-  <svg id="spark" preserveAspectRatio="none"></svg>
-</section>
+<div class="board" id="board">
+  <section class="card wide" id="trend" data-card="trend" style="display:none">
+    <div class="head"><span><span class="grip" title="drag to move">⠿</span>
+      <h2 style="display:inline">Fleet value</h2></span>
+      <span class="sub">total portfolio, sampled each refresh</span></div>
+    <svg id="spark" preserveAspectRatio="none"></svg>
+  </section>
 
-<div class="grid cols">
-  <section class="card" id="kraken"></section>
-  <section class="card" id="phantom"></section>
-</div>
+  <section class="card k-card" data-card="kraken">
+    <div class="head"><span><span class="grip" title="drag to move">⠿</span>
+      <h2 style="display:inline">Kraken — multi-timeframe ladders</h2></span>
+      <span class="sub" id="kraken-sub"></span></div>
+    <div id="kraken"></div>
+  </section>
 
-<div class="grid cols" style="margin-top:12px">
-  <section class="card">
-    <div class="head"><h2>Kraken trades</h2><span class="sub">latest first</span></div>
+  <section class="card p-card" data-card="phantom">
+    <div class="head"><span><span class="grip" title="drag to move">⠿</span>
+      <h2 style="display:inline">Phantom — Solana ladders</h2></span>
+      <span class="sub" id="phantom-sub"></span></div>
+    <div id="phantom"></div>
+  </section>
+
+  <section class="card k-card" data-card="ktrades">
+    <div class="head"><span><span class="grip" title="drag to move">⠿</span>
+      <h2 style="display:inline">Kraken trades</h2></span>
+      <span class="sub">latest first</span></div>
     <div class="twrap"><table id="ktrades"></table></div>
   </section>
-  <section class="card">
-    <div class="head"><h2>Phantom trades</h2><span class="sub">latest first</span></div>
+
+  <section class="card p-card" data-card="ptrades">
+    <div class="head"><span><span class="grip" title="drag to move">⠿</span>
+      <h2 style="display:inline">Phantom trades</h2></span>
+      <span class="sub">latest first</span></div>
     <div class="twrap"><table id="ptrades"></table></div>
   </section>
 </div>
@@ -549,8 +583,8 @@ function driftBar(drift){
 }
 
 function kraken(k){
-  let h='<div class="head"><h2>Kraken — multi-timeframe ladders</h2>'+
-    '<span class="sub">USD est. '+usd(k.usd_est)+' · banked '+usd(k.banked)+'</span></div>';
+  $("kraken-sub").textContent="USD est. "+usd(k.usd_est)+" · banked "+usd(k.banked);
+  let h="";
   if(k.portfolio!=null){
     h+='<div class="small" style="margin-bottom:8px">Scoreboard: portfolio <b>'+
       usd(k.portfolio)+'</b> vs just-holding '+usd(k.hodl)+' → bot edge <b class="'+
@@ -580,9 +614,9 @@ function kraken(k){
 }
 
 function phantom(p){
-  let h='<div class="head"><h2>Phantom — Solana ladders</h2>'+
-    '<span class="sub">SOL '+num(p.sol_balance,4)+' ('+usd(p.sol_usd)+
-    ') · SOL '+px(p.sol_price)+'</span></div>';
+  $("phantom-sub").textContent="SOL "+num(p.sol_balance,4)+" ("+usd(p.sol_usd)+
+    ") · SOL "+px(p.sol_price);
+  let h="";
   for(const c of p.coins){
     h+='<div class="coinrow"><span><span class="coin">'+esc(c.name)+'</span> '+
       '<span class="tag">'+num(c.holding_ui,0)+' held · '+usd(c.value)+
@@ -623,15 +657,22 @@ function spark(hist){
     .map(p=>({t:p.t,v:(p.kraken||0)+(p.phantom||0)}));
   if(pts.length<3){ $("trend").style.display="none"; return; }
   $("trend").style.display="";
-  const svg=$("spark"),W=svg.clientWidth||800,H=64,P=4;
+  const svg=$("spark"),W=svg.clientWidth||800,H=svg.clientHeight||170,P=8;
   const vs=pts.map(p=>p.v),mn=Math.min(...vs),mx=Math.max(...vs),sp=mx-mn||1;
   const X=i=>P+i/(pts.length-1)*(W-2*P);
   const Y=v=>H-P-(v-mn)/sp*(H-2*P);
   svg.setAttribute("viewBox","0 0 "+W+" "+H);
   const d=pts.map((p,i)=>(i?"L":"M")+X(i).toFixed(1)+" "+Y(p.v).toFixed(1)).join(" ");
-  svg.innerHTML='<path d="'+d+'" fill="none" stroke="var(--blue)" stroke-width="2"/>'+
-    '<text x="'+P+'" y="12" fill="var(--muted)" font-size="10">'+usd(mx)+'</text>'+
-    '<text x="'+P+'" y="'+(H-6)+'" fill="var(--muted)" font-size="10">'+usd(mn)+'</text>';
+  const area=d+" L"+X(pts.length-1).toFixed(1)+" "+(H-P)+" L"+X(0).toFixed(1)+" "+(H-P)+" Z";
+  const mid=(mn+mx)/2;
+  const gl=[mx,mid,mn].map(v=>'<line x1="'+P+'" x2="'+(W-P)+'" y1="'+Y(v).toFixed(1)+
+    '" y2="'+Y(v).toFixed(1)+'" stroke="var(--grid)" stroke-width="1"/>').join("");
+  const lb=[mx,mid,mn].map((v,i)=>'<text x="'+(P+2)+'" y="'+
+    (i===0?Y(v)+12:Y(v)-4).toFixed(1)+
+    '" fill="var(--muted)" font-size="10">'+usd(v)+'</text>').join("");
+  svg.innerHTML=gl+
+    '<path d="'+area+'" fill="var(--blue)" opacity="0.08"/>'+
+    '<path d="'+d+'" fill="none" stroke="var(--blue)" stroke-width="2"/>'+lb;
 }
 
 function kpis(d){
@@ -662,7 +703,7 @@ async function refresh(){
       ["Time (UTC)","Coin","TF","Side","USD","Price","Volume","Mode"]);
     trades($("ptrades"),d.phantom.trades,
       ["Time (UTC)","Coin","Action","USD","Price / Tx"]);
-    spark(d.history||[]);
+    lastHist=d.history||[]; spark(lastHist);
     $("updated").textContent="updated "+new Date().toLocaleTimeString();
     const errs=d.errors||[];
     $("errors").style.display=errs.length?"block":"none";
@@ -674,6 +715,46 @@ async function refresh(){
 }
 document.querySelectorAll(".pill").forEach((el,i)=>
   el.dataset.name=["KRAKEN","PHANTOM"][i]);
+
+/* ---- draggable cards: grab the ⠿ grip, drop anywhere on the board ---- */
+let dragEl=null;
+const board=$("board");
+function saveOrder(){
+  localStorage.setItem("boardOrder",JSON.stringify(
+    [...board.querySelectorAll(".card")].map(c=>c.dataset.card)));
+}
+(function restoreOrder(){
+  try{
+    const o=JSON.parse(localStorage.getItem("boardOrder")||"null");
+    if(o) o.forEach(id=>{
+      const el=board.querySelector('[data-card="'+id+'"]');
+      if(el) board.appendChild(el);
+    });
+  }catch(e){}
+})();
+board.querySelectorAll(".card").forEach(c=>{
+  const g=c.querySelector(".grip");
+  g.addEventListener("mousedown",()=>c.draggable=true);
+  document.addEventListener("mouseup",()=>c.draggable=false);
+  c.addEventListener("dragstart",e=>{
+    dragEl=c; c.classList.add("dragging");
+    e.dataTransfer.effectAllowed="move";
+  });
+  c.addEventListener("dragend",()=>{
+    c.draggable=false; c.classList.remove("dragging");
+    dragEl=null; saveOrder(); spark(lastHist);
+  });
+  c.addEventListener("dragover",e=>{
+    e.preventDefault();
+    if(!dragEl||dragEl===c) return;
+    const r=c.getBoundingClientRect();
+    const before=(e.clientY-r.top)/r.height<0.5;
+    board.insertBefore(dragEl,before?c:c.nextSibling);
+  });
+});
+board.addEventListener("drop",e=>e.preventDefault());
+
+let lastHist=[];
 refresh(); setInterval(refresh,30000);
 </script></body></html>
 """
